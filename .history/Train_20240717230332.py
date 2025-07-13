@@ -2,7 +2,6 @@ import torch
 import evaluate
 import argparse
 import numpy as np
-import os
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from transformers import TrainingArguments, Trainer
 from datasets import load_dataset
@@ -79,18 +78,8 @@ def main(args):
     )
 
     print("Start Training...")
-    train_result = trainer.train()
+    trainer.train()
     trainer.evaluate()
-
-    # After training, list the checkpoint directories to show the output checkpoint number(s)
-    print("\nSaved checkpoints in output directory:")
-    if os.path.exists(args.output):
-        checkpoints = [d for d in os.listdir(args.output) if d.startswith("checkpoint-")]
-        checkpoints.sort(key=lambda x: int(x.split("-")[-1]) if x.split("-")[-1].isdigit() else -1)
-        for ckpt in checkpoints:
-            print(f"  {ckpt}")
-    else:
-        print("Output directory does not exist.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -103,3 +92,4 @@ if __name__ == "__main__":
     print(args.output)
 
     main(args)
+

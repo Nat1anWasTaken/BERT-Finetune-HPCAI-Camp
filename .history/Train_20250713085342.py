@@ -89,6 +89,8 @@ def main(args):
         checkpoints.sort(key=lambda x: int(x.split("-")[-1]) if x.split("-")[-1].isdigit() else -1)
         for ckpt in checkpoints:
             print(f"  {ckpt}")
+        if !checkpoints:
+            print("No checkpoints found.")
     else:
         print("Output directory does not exist.")
 
