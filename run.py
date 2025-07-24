@@ -1,4 +1,18 @@
-#!/usr/bin/env python3
+def wait_for_job_completion(self, job_id):
+        """Wait for SLURM job to complete"""
+        print(f"Waiting for job {job_id} to complete...")
+        
+        while True:
+            # Check job status for specific user
+            result = subprocess.run(['squeue', '-u', self.user_id], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            
+            # Check if job is still in the queue
+            if job_id not in result.stdout:
+                print(f"Job {job_id} completed!")
+                break
+                
+            print("Job still running... checking again in 30 seconds")
+            time.sleep(30)#!/usr/bin/env python3
 """
 Automated BERT Fine-tuning Script
 Continuously trains and evaluates BERT model until target accuracy is achieved.
@@ -12,12 +26,15 @@ import glob
 from pathlib import Path
 
 class BERTAutoTrainer:
-    def __init__(self, target_accuracy=79.43, max_iterations=10):
+    def __init__(self, target_accuracy=79.43, max_iterations=10, user_id="u9603854"):
         self.target_accuracy = target_accuracy
         self.max_iterations = max_iterations
         self.current_iteration = 0
         self.best_accuracy = 0.0
         self.best_checkpoint = None
+        self.user_id = user_id
+        self.previous_accuracy = 0.0
+        self.tested_checkpoints = []
         
     def submit_training_job(self):
         """Submit training job using sbatch"""
@@ -56,23 +73,36 @@ class BERTAutoTrainer:
             print("Job still running... checking again in 30 seconds")
             time.sleep(30)
     
-    def find_latest_checkpoint(self):
-        """Find the latest checkpoint in output_model directory"""
+    def get_all_checkpoints_sorted(self):
+        """Get all checkpoints sorted from smallest to largest"""
         checkpoint_pattern = "./output_model/checkpoint-*"
         checkpoints = glob.glob(checkpoint_pattern)
         
         if not checkpoints:
             print("No checkpoints found!")
-            return None
+            return []
             
         # Sort checkpoints by the number after 'checkpoint-'
         def extract_step(checkpoint_path):
             match = re.search(r'checkpoint-(\d+)', checkpoint_path)
             return int(match.group(1)) if match else 0
             
-        latest_checkpoint = max(checkpoints, key=extract_step)
-        print(f"Found latest checkpoint: {latest_checkpoint}")
-        return latest_checkpoint
+        sorted_checkpoints = sorted(checkpoints, key=extract_step)
+        print(f"Found {len(sorted_checkpoints)} checkpoints:")
+        for cp in sorted_checkpoints:
+            step = extract_step(cp)
+            print(f"  - {cp} (step {step})")
+        return sorted_checkpoints
+    
+    def get_next_untested_checkpoint(self):
+        """Get the next checkpoint that hasn't been tested yet"""
+        all_checkpoints = self.get_all_checkpoints_sorted()
+        
+        for checkpoint in all_checkpoints:
+            if checkpoint not in self.tested_checkpoints:
+                return checkpoint
+        
+        return None
     
     def run_inference(self, checkpoint_path):
         """Run inference on the given checkpoint"""
@@ -137,71 +167,98 @@ class BERTAutoTrainer:
             print(f"Backed up best model to {backup_dir}")
     
     def run(self):
-        """Main training loop"""
-        print(f"Starting automated BERT fine-tuning")
+        """Main training loop - tests checkpoints from smallest to largest"""
+        print(f"Starting automated BERT evaluation")
         print(f"Target accuracy: {self.target_accuracy}%")
-        print(f"Maximum iterations: {self.max_iterations}")
+        print(f"Strategy: Test checkpoints from smallest to largest, stop if accuracy drops")
         
-        while self.current_iteration < self.max_iterations:
+        # First, run one training iteration to ensure we have checkpoints
+        print(f"\n{'='*50}")
+        print(f"INITIAL TRAINING")
+        print(f"{'='*50}")
+        
+        train_job_id = self.submit_training_job()
+        if train_job_id:
+            self.wait_for_job_completion(train_job_id)
+        
+        # Now test checkpoints from smallest to largest
+        checkpoint_iteration = 0
+        
+        while True:
+            checkpoint_iteration += 1
             print(f"\n{'='*50}")
-            print(f"ITERATION {self.current_iteration + 1}/{self.max_iterations}")
+            print(f"CHECKPOINT EVALUATION {checkpoint_iteration}")
             print(f"{'='*50}")
             
-            # Step 1: Submit training job
-            train_job_id = self.submit_training_job()
-            if not train_job_id:
-                print("Failed to submit training job, skipping iteration")
-                continue
-                
-            # Step 2: Wait for training completion
-            self.wait_for_job_completion(train_job_id)
-            
-            # Step 3: Find latest checkpoint
-            checkpoint_path = self.find_latest_checkpoint()
+            # Get next untested checkpoint
+            checkpoint_path = self.get_next_untested_checkpoint()
             if not checkpoint_path:
-                print("No checkpoint found, skipping iteration")
-                continue
-                
-            # Step 4: Run inference
+                print("No more untested checkpoints available")
+                if checkpoint_iteration == 1:
+                    print("No checkpoints found at all. Training may have failed.")
+                    return False
+                else:
+                    print(f"All checkpoints tested. Best accuracy: {self.best_accuracy}%")
+                    break
+            
+            # Mark this checkpoint as tested
+            self.tested_checkpoints.append(checkpoint_path)
+            
+            # Run inference on this checkpoint
             inf_job_id = self.run_inference(checkpoint_path)
             if not inf_job_id:
-                print("Failed to run inference, skipping iteration")
+                print("Failed to run inference, skipping checkpoint")
                 continue
                 
-            # Step 5: Parse accuracy
+            # Parse accuracy
             accuracy = self.parse_accuracy()
             if accuracy is None:
-                print("Failed to parse accuracy, skipping iteration")
+                print("Failed to parse accuracy, skipping checkpoint")
                 continue
                 
-            # Step 6: Check if target reached
-            print(f"\nCurrent accuracy: {accuracy}%")
+            print(f"\nCheckpoint: {checkpoint_path}")
+            print(f"Current accuracy: {accuracy}%")
+            print(f"Previous accuracy: {self.previous_accuracy}%")
             print(f"Target accuracy: {self.target_accuracy}%")
             
-            # Backup if this is the best so far
-            self.backup_best_results(checkpoint_path, accuracy)
+            # Check if accuracy dropped compared to previous
+            if checkpoint_iteration > 1 and accuracy < self.previous_accuracy:
+                print(f"\n⚠️  ACCURACY DROPPED! {accuracy}% < {self.previous_accuracy}%")
+                print(f"Stopping evaluation and using previous best checkpoint")
+                print(f"Best accuracy: {self.best_accuracy}%")
+                print(f"Best checkpoint: {self.best_checkpoint}")
+                return self.best_accuracy > self.target_accuracy
             
+            # Update best results
+            self.backup_best_results(checkpoint_path, accuracy)
+            self.previous_accuracy = accuracy
+            
+            # Check if target reached
             if accuracy > self.target_accuracy:
                 print(f"\n🎉 SUCCESS! Target accuracy {self.target_accuracy}% exceeded!")
                 print(f"Final accuracy: {accuracy}%")
                 print(f"Best checkpoint: {checkpoint_path}")
                 return True
-                
-            print(f"Accuracy {accuracy}% is below target {self.target_accuracy}%")
-            self.current_iteration += 1
             
-            if self.current_iteration < self.max_iterations:
-                print("Starting next iteration...")
-                time.sleep(10)  # Brief pause before next iteration
+            print(f"Accuracy {accuracy}% is below target {self.target_accuracy}%")
+            print("Testing next checkpoint...")
+            time.sleep(5)  # Brief pause before next checkpoint
         
-        print(f"\n❌ Maximum iterations ({self.max_iterations}) reached")
-        print(f"Best accuracy achieved: {self.best_accuracy}%")
-        print(f"Best checkpoint: {self.best_checkpoint}")
-        return False
+        # Final results
+        if self.best_accuracy > self.target_accuracy:
+            print(f"\n🎉 SUCCESS! Target accuracy achieved!")
+            print(f"Best accuracy: {self.best_accuracy}%")
+            print(f"Best checkpoint: {self.best_checkpoint}")
+            return True
+        else:
+            print(f"\n❌ Target accuracy not reached")
+            print(f"Best accuracy: {self.best_accuracy}%")
+            print(f"Best checkpoint: {self.best_checkpoint}")
+            return False
 
 def main():
     # Configuration
-    TARGET_ACCURACY = 79.43  # Change this to your desired target
+    TARGET_ACCURACY = 79.95  # Change this to your desired target
     MAX_ITERATIONS = 10      # Maximum number of training iterations
     
     # Create trainer instance
