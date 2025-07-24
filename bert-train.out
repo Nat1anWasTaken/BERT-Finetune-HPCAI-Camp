@@ -1,19 +1,7 @@
-Model: google-bert/bert-base-uncased
-Output directory: ./train_checkpoints
-Full training dataset size: 26732
-Test dataset size: 3432
-Training samples: 24058
-Validation samples: 2674
-Class weights: {np.int64(0): np.float64(1.1639090469279147), np.int64(1): np.float64(0.8365672160790041), np.int64(2): np.float64(1.0576804712916557)}
-Data preprocessing completed.
-Dataset columns after preprocessing:
-Train: ['input_ids', 'attention_mask', 'labels']
-Val: ['input_ids', 'attention_mask', 'labels']
-Test: ['input_ids', 'attention_mask', 'labels']
-Sample from processed dataset:
-{'input_ids': [101, 1045, 1036, 1040, 2031, 5838, 1010, 2065, 1045, 2020, 2183, 102], 'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 'labels': 1}
-Total training steps: 1496
-Warmup steps: 149
+google-bert/bert-base-uncased
+./output_model
+length of dataset is 26732
+========================
 Training Config: TrainingArguments(
 _n_gpu=1,
 accelerator_config={'split_batches': False, 'dispatch_batches': None, 'even_batches': True, 'use_seedable_sampler': True, 'non_blocking': False, 'gradient_accumulation_kwargs': None, 'use_configured_state': False},
@@ -27,16 +15,16 @@ batch_eval_metrics=False,
 bf16=False,
 bf16_full_eval=False,
 data_seed=None,
-dataloader_drop_last=True,
-dataloader_num_workers=4,
+dataloader_drop_last=False,
+dataloader_num_workers=0,
 dataloader_persistent_workers=False,
 dataloader_pin_memory=True,
 dataloader_prefetch_factor=None,
 ddp_backend=None,
 ddp_broadcast_buffers=None,
-ddp_bucket_cap_mb=25,
-ddp_find_unused_parameters=False,
-ddp_timeout=3600,
+ddp_bucket_cap_mb=None,
+ddp_find_unused_parameters=None,
+ddp_timeout=1800,
 debug=[],
 deepspeed=None,
 disable_tqdm=False,
@@ -47,8 +35,8 @@ eval_accumulation_steps=None,
 eval_delay=0,
 eval_do_concat_batches=True,
 eval_on_start=False,
-eval_steps=250,
-eval_strategy=IntervalStrategy.STEPS,
+eval_steps=None,
+eval_strategy=IntervalStrategy.EPOCH,
 eval_use_gather_object=False,
 fp16=True,
 fp16_backend=auto,
@@ -59,11 +47,11 @@ fsdp_config={'min_num_params': 0, 'xla': False, 'xla_fsdp_v2': False, 'xla_fsdp_
 fsdp_min_num_params=0,
 fsdp_transformer_layer_cls_to_wrap=None,
 full_determinism=False,
-gradient_accumulation_steps=2,
+gradient_accumulation_steps=1,
 gradient_checkpointing=False,
 gradient_checkpointing_kwargs=None,
 greater_is_better=True,
-group_by_length=True,
+group_by_length=False,
 half_precision_backend=auto,
 hub_always_push=False,
 hub_model_id=None,
@@ -79,7 +67,7 @@ include_tokens_per_second=False,
 jit_mode_eval=False,
 label_names=None,
 label_smoothing_factor=0.0,
-learning_rate=2e-05,
+learning_rate=5e-05,
 length_column_name=length,
 liger_kernel_config=None,
 load_best_model_at_end=True,
@@ -87,28 +75,28 @@ local_rank=0,
 log_level=passive,
 log_level_replica=warning,
 log_on_each_node=True,
-logging_dir=./logs,
-logging_first_step=True,
+logging_dir=./train_logs,
+logging_first_step=False,
 logging_nan_inf_filter=True,
-logging_steps=50,
+logging_steps=500,
 logging_strategy=IntervalStrategy.STEPS,
 lr_scheduler_kwargs={},
-lr_scheduler_type=SchedulerType.COSINE,
+lr_scheduler_type=SchedulerType.LINEAR,
 max_grad_norm=1.0,
 max_steps=-1,
-metric_for_best_model=f1,
+metric_for_best_model=accuracy,
 mp_parameters=,
 neftune_noise_alpha=None,
 no_cuda=False,
-num_train_epochs=12,
+num_train_epochs=1,
 optim=OptimizerNames.ADAMW_TORCH,
 optim_args=None,
 optim_target_modules=None,
-output_dir=./train_checkpoints,
+output_dir=./output_model,
 overwrite_output_dir=True,
 past_index=-1,
-per_device_eval_batch_size=64,
-per_device_train_batch_size=64,
+per_device_eval_batch_size=8,
+per_device_train_batch_size=8,
 prediction_loss_only=False,
 push_to_hub=False,
 push_to_hub_model_id=None,
@@ -119,13 +107,13 @@ remove_unused_columns=True,
 report_to=[],
 restore_callback_states_from_checkpoint=False,
 resume_from_checkpoint=None,
-run_name=./train_checkpoints,
+run_name=./output_model,
 save_on_each_node=False,
 save_only_model=False,
 save_safetensors=True,
-save_steps=250,
-save_strategy=SaveStrategy.STEPS,
-save_total_limit=5,
+save_steps=500,
+save_strategy=SaveStrategy.EPOCH,
+save_total_limit=None,
 seed=42,
 skip_memory_metrics=True,
 tf32=None,
@@ -142,71 +130,18 @@ use_legacy_prediction_loop=False,
 use_liger_kernel=False,
 use_mps_device=False,
 warmup_ratio=0.0,
-warmup_steps=149,
-weight_decay=0.01,
+warmup_steps=0,
+weight_decay=0.0,
 )
-Starting training with optimized configuration...
-Using 1 GPUs
-Effective batch size: 128
-{'loss': 1.1637, 'grad_norm': 3.2532310485839844, 'learning_rate': 0.0, 'epoch': 0.01}
-{'loss': 1.1113, 'grad_norm': 1.1561493873596191, 'learning_rate': 6.5771812080536925e-06, 'epoch': 0.27}
-{'loss': 0.975, 'grad_norm': 3.4217000007629395, 'learning_rate': 1.3288590604026848e-05, 'epoch': 0.53}
-{'loss': 0.6496, 'grad_norm': 3.3907856941223145, 'learning_rate': 2e-05, 'epoch': 0.8}
-{'loss': 0.5648, 'grad_norm': 2.6611242294311523, 'learning_rate': 1.9972223371473483e-05, 'epoch': 1.06}
-{'loss': 0.4909, 'grad_norm': 3.993945837020874, 'learning_rate': 1.9889047794112383e-05, 'epoch': 1.33}
-{'eval_loss': 0.5411950945854187, 'eval_accuracy': 0.7633384146341463, 'eval_precision': 0.7654384137492625, 'eval_recall': 0.7742899975678704, 'eval_f1': 0.7684466008319073, 'eval_runtime': 0.6861, 'eval_samples_per_second': 3897.253, 'eval_steps_per_second': 61.213, 'epoch': 1.33}
-{'loss': 0.5017, 'grad_norm': 3.6185545921325684, 'learning_rate': 1.9750935335339666e-05, 'epoch': 1.6}
-{'loss': 0.5012, 'grad_norm': 2.926692485809326, 'learning_rate': 1.9558653254847786e-05, 'epoch': 1.86}
-{'loss': 0.4405, 'grad_norm': 2.9074084758758545, 'learning_rate': 1.931326974222116e-05, 'epoch': 2.13}
-{'loss': 0.3875, 'grad_norm': 3.6394946575164795, 'learning_rate': 1.901614798279514e-05, 'epoch': 2.39}
-{'loss': 0.4075, 'grad_norm': 3.136747360229492, 'learning_rate': 1.8668938584717473e-05, 'epoch': 2.66}
-{'eval_loss': 0.5484292507171631, 'eval_accuracy': 0.7827743902439024, 'eval_precision': 0.7849625900603874, 'eval_recall': 0.7910638473067375, 'eval_f1': 0.787218363658346, 'eval_runtime': 0.6704, 'eval_samples_per_second': 3988.793, 'eval_steps_per_second': 62.651, 'epoch': 2.66}
-{'loss': 0.3854, 'grad_norm': 2.8667590618133545, 'learning_rate': 1.8273570409282422e-05, 'epoch': 2.93}
-{'loss': 0.3214, 'grad_norm': 4.778345584869385, 'learning_rate': 1.7832239855478047e-05, 'epoch': 3.19}
-{'loss': 0.3044, 'grad_norm': 3.4911422729492188, 'learning_rate': 1.7347398658274427e-05, 'epoch': 3.46}
-{'loss': 0.3053, 'grad_norm': 3.3428432941436768, 'learning_rate': 1.6821740268437373e-05, 'epoch': 3.73}
-{'loss': 0.3075, 'grad_norm': 5.711880683898926, 'learning_rate': 1.625818488953217e-05, 'epoch': 3.99}
-{'eval_loss': 0.5923231840133667, 'eval_accuracy': 0.7804878048780488, 'eval_precision': 0.7816127753203904, 'eval_recall': 0.7888844778961132, 'eval_f1': 0.7846536376252228, 'eval_runtime': 0.6626, 'eval_samples_per_second': 4035.767, 'eval_steps_per_second': 63.389, 'epoch': 3.99}
-{'loss': 0.2416, 'grad_norm': 6.0596160888671875, 'learning_rate': 1.5659863255241596e-05, 'epoch': 4.26}
-{'loss': 0.2406, 'grad_norm': 5.312821388244629, 'learning_rate': 1.5030099237120674e-05, 'epoch': 4.52}
-{'loss': 0.2167, 'grad_norm': 4.809820652008057, 'learning_rate': 1.4372391379407548e-05, 'epoch': 4.79}
-{'loss': 0.2034, 'grad_norm': 4.473453998565674, 'learning_rate': 1.3690393463470748e-05, 'epoch': 5.05}
-{'loss': 0.1765, 'grad_norm': 3.0537757873535156, 'learning_rate': 1.2987894209863644e-05, 'epoch': 5.32}
-{'eval_loss': 0.7133421301841736, 'eval_accuracy': 0.7778201219512195, 'eval_precision': 0.780164970410601, 'eval_recall': 0.7850035882121444, 'eval_f1': 0.7823132408504533, 'eval_runtime': 0.6902, 'eval_samples_per_second': 3874.109, 'eval_steps_per_second': 60.85, 'epoch': 5.32}
-{'loss': 0.1688, 'grad_norm': 6.287289142608643, 'learning_rate': 1.2268796230747752e-05, 'epoch': 5.59}
-{'loss': 0.1776, 'grad_norm': 6.028932571411133, 'learning_rate': 1.1537094349611096e-05, 'epoch': 5.85}
-{'loss': 0.1405, 'grad_norm': 5.640472412109375, 'learning_rate': 1.0796853408722563e-05, 'epoch': 6.12}
-{'loss': 0.1235, 'grad_norm': 3.425098180770874, 'learning_rate': 1.0052185687609197e-05, 'epoch': 6.38}
-{'loss': 0.1272, 'grad_norm': 2.746628522872925, 'learning_rate': 9.307228058004004e-06, 'epoch': 6.65}
-{'eval_loss': 0.8723499178886414, 'eval_accuracy': 0.7648628048780488, 'eval_precision': 0.7660498203433087, 'eval_recall': 0.7751642709651847, 'eval_f1': 0.7691800693776779, 'eval_runtime': 0.6959, 'eval_samples_per_second': 3842.764, 'eval_steps_per_second': 60.358, 'epoch': 6.65}
-{'loss': 0.118, 'grad_norm': 3.1124351024627686, 'learning_rate': 8.566119002176095e-06, 'epoch': 6.92}
-{'loss': 0.1119, 'grad_norm': 3.3991539478302, 'learning_rate': 7.832975622313747e-06, 'epoch': 7.18}
-{'loss': 0.1067, 'grad_norm': 4.188046455383301, 'learning_rate': 7.111870768680778e-06, 'epoch': 7.45}
-{'loss': 0.102, 'grad_norm': 2.859689712524414, 'learning_rate': 6.406810413606796e-06, 'epoch': 7.71}
-{'loss': 0.0902, 'grad_norm': 0.7125626802444458, 'learning_rate': 5.72171139700614e-06, 'epoch': 7.98}
-{'eval_loss': 0.9396577477455139, 'eval_accuracy': 0.78125, 'eval_precision': 0.7835958694229953, 'eval_recall': 0.7880572140079045, 'eval_f1': 0.7854552720383636, 'eval_runtime': 0.6678, 'eval_samples_per_second': 4003.979, 'eval_steps_per_second': 62.89, 'epoch': 7.98}
-{'loss': 0.0758, 'grad_norm': 0.9215230345726013, 'learning_rate': 5.060379667056399e-06, 'epoch': 8.25}
-{'loss': 0.089, 'grad_norm': 4.046868801116943, 'learning_rate': 4.438874975939176e-06, 'epoch': 8.51}
-{'loss': 0.074, 'grad_norm': 5.498172283172607, 'learning_rate': 3.835294431397013e-06, 'epoch': 8.78}
-{'loss': 0.0737, 'grad_norm': 4.3079118728637695, 'learning_rate': 3.265960834165739e-06, 'epoch': 9.04}
-{'loss': 0.0688, 'grad_norm': 3.353145122528076, 'learning_rate': 2.7340370178129516e-06, 'epoch': 9.31}
-{'eval_loss': 0.9819769263267517, 'eval_accuracy': 0.7747713414634146, 'eval_precision': 0.779755675826118, 'eval_recall': 0.7787450639772882, 'eval_f1': 0.7792207146381838, 'eval_runtime': 0.7056, 'eval_samples_per_second': 3789.681, 'eval_steps_per_second': 59.524, 'epoch': 9.31}
-{'train_runtime': 169.7339, 'train_samples_per_second': 1700.874, 'train_steps_per_second': 13.291, 'train_loss': 0.2966209245409284, 'epoch': 9.31}
-
-==================================================
-TRAINING COMPLETED - FINAL EVALUATION
-==================================================
-Validation Results: {'eval_loss': 0.5414683222770691, 'eval_accuracy': 0.7850609756097561, 'eval_precision': 0.7871550369766834, 'eval_recall': 0.7935044525674703, 'eval_f1': 0.7894887580051796, 'eval_runtime': 0.6858, 'eval_samples_per_second': 3899.261, 'eval_steps_per_second': 61.245, 'epoch': 9.309333333333333}
-Test Results: {'eval_loss': 0.5138100385665894, 'eval_accuracy': 0.7892099056603774, 'eval_precision': 0.7913324358654488, 'eval_recall': 0.7968674443415736, 'eval_f1': 0.792878879943308, 'eval_runtime': 0.834, 'eval_samples_per_second': 4115.047, 'eval_steps_per_second': 64.747, 'epoch': 9.309333333333333}
-
-Final Test Accuracy: 0.7892
-Final Test F1-Score: 0.7929
-Final Test Precision: 0.7913
-Final Test Recall: 0.7969
+Start Training...
+{'loss': 0.726, 'grad_norm': 12.267373085021973, 'learning_rate': 4.17719414893617e-05, 'epoch': 0.17}
+{'loss': 0.6138, 'grad_norm': 7.375679016113281, 'learning_rate': 3.3460771276595747e-05, 'epoch': 0.33}
+{'loss': 0.5907, 'grad_norm': 11.106110572814941, 'learning_rate': 2.5149601063829787e-05, 'epoch': 0.5}
+{'loss': 0.5691, 'grad_norm': 7.340646266937256, 'learning_rate': 1.683843085106383e-05, 'epoch': 0.66}
+{'loss': 0.5443, 'grad_norm': 10.88752269744873, 'learning_rate': 8.527260638297872e-06, 'epoch': 0.83}
+{'loss': 0.5369, 'grad_norm': 8.756197929382324, 'learning_rate': 2.160904255319149e-07, 'epoch': 1.0}
+{'eval_loss': 0.5379200577735901, 'eval_accuracy': 0.7863823419378975, 'eval_runtime': 4.0053, 'eval_samples_per_second': 667.359, 'eval_steps_per_second': 83.638, 'epoch': 1.0}
+{'train_runtime': 151.9717, 'train_samples_per_second': 158.312, 'train_steps_per_second': 19.793, 'train_loss': 0.596686304725231, 'epoch': 1.0}
 
 Saved checkpoints in output directory:
-  checkpoint-500
-  checkpoint-1000
-  checkpoint-1250
-  checkpoint-1500
-  checkpoint-1750
+  checkpoint-3008
