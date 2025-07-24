@@ -54,17 +54,18 @@ def main(args):
         overwrite_output_dir=True,
         save_strategy="epoch",
         eval_strategy="epoch",
-        per_device_train_batch_size=8,
-        per_device_eval_batch_size=8,
-        learning_rate=5e-5,
-        adam_beta1=0.9,
-        adam_beta2=0.999,
-        adam_epsilon=1e-8,
-        num_train_epochs=1,
+        per_device_train_batch_size=16,
+        per_device_eval_batch_size=16,
+        learning_rate=3e-5,
+        num_train_epochs=4,
+        weight_decay=0.01,
+        warmup_steps=100,
+        lr_scheduler_type="cosine",
         logging_dir="./train_logs",
+        logging_steps=10,
+        fp16=True,
         load_best_model_at_end=True,
-        metric_for_best_model="accuracy",
-        fp16=True
+        metric_for_best_model="accuracy"
     )
     
     # Do not modify or remove this line, this is for us to check your configurations
