@@ -3,7 +3,7 @@
 #SBATCH -p gp1d
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:4
 #SBATCH -J bert-train
 #SBATCH -o bert-train.out
 #SBATCH -e bert-train.err
